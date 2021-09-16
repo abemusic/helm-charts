@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "release.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "release.name" . }}
+    helm.sh/chart: {{ include "release.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+
+  00-init-databases.sh: |
+    #!/bin/bash
+    set -e
+
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+    {{ range $db := .Values.initDbs }}
+      CREATE DATABASE {{ $db.database }};
+      CREATE USER {{ $db.username }} WITH ENCRYPTED PASSWORD '{{ $db.password }}';
+      GRANT ALL PRIVILEGES ON DATABASE {{ $db.database }} TO {{ $db.username }};
+    {{ end }}
+    EOSQL
+
+{{ range $i, $obj := .Values.initSql -}}
+  {{ $index := add $i 50 }}
+  {{ printf "%d-%s.sql" $index $obj.name }}:
+    {{ toYaml $obj.contents | indent 2}}
+{{ end }}

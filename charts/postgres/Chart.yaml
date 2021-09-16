@@ -1,0 +1,9 @@
+apiVersion: v2
+appVersion: "13.4"
+description: Postgres
+name: postgres
+version: 0.1.0
+sources:
+  - https://www.postgresql.org/
+maintainers:
+  - name: abemusic
