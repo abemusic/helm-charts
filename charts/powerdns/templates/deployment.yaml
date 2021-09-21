@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "powerdns.fullname" . }}
+  labels:
+{{ include "powerdns.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "powerdns.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    type: {{ .Values.strategyType }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "powerdns.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ template "powerdns.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: {{ .Chart.Name }}-init-db
+          image: "{{ .Values.powerdns.initDb.image.repository }}:{{ .Values.powerdns.initDb.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: powerdns-scripts
+              mountPath: /opt/init-powerdns-db.sql
+              subPath: init-powerdns-db.sql
+          env:
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "powerdns.fullname" . }}
+                  key: postgres_hostname
+            - name: PGPORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "powerdns.fullname" . }}
+                  key: postgres_port
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "powerdns.fullname" . }}
+                  key: postgres_username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "powerdns.fullname" . }}
+                  key: postgres_password
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "powerdns.fullname" . }}
+                  key: postgres_database
+          command:
+            - psql
+            - "postgresql://$(PGUSER):$(PGPASSWORD)@$(PGHOST):$(PGPORT)/$(PGDATABASE)"
+            - -f
+            - /opt/init-powerdns-db.sql
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ tpl .Values.image.tag . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: POSTGRES_HOSTNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "powerdns.fullname" . }}
+                  key: postgres_hostname
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "powerdns.fullname" . }}
+                  key: postgres_port
+            - name: POWERDNS_DOMAIN
+              value: "{{ .Values.powerdns.domain }}"
+          volumeMounts:
+            - name: powerdns-config
+              mountPath: /etc/powerdns/pdns.d
+            - name: powerdns-scripts
+              mountPath: /opt/setup-powerdns-zone.sh
+              subPath: setup-powerdns-zone.sh
+          ports:
+            - name: dns-tcp
+              containerPort: 53
+              protocol: TCP
+            - name: dns-udp
+              containerPort: 53
+              protocol: UDP
+            - name: dns-webserver
+              containerPort: {{ .Values.powerdns.webserver.port }}
+              protocol: TCP
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            tcpSocket:
+              port: dns-tcp
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+          {{ end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            tcpSocket:
+              port: dns-tcp
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+          {{ end }}
+          {{- if .Values.probes.startup.enabled }}
+          startupProbe:
+            tcpSocket:
+              port: dns-tcp
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+          {{ end }}
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /opt/setup-powerdns-zone.sh
+
+          resources:
+{{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: powerdns-config
+          configMap:
+            name: {{ template "powerdns.fullname" . }}-config
+        - name: powerdns-scripts
+          configMap:
+            name: {{ template "powerdns.fullname" . }}-scripts
+            defaultMode: 0755
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
