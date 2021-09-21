@@ -2,7 +2,7 @@ apiVersion: v2
 appVersion: v4.4.1
 description: powerdns
 name: powerdns
-version: 0.1.0
+version: 0.1.1
 sources:
   - http://www.github.com/PowerDNS/
 maintainers:
