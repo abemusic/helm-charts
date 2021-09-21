@@ -16,6 +16,19 @@ entries:
     version: 0.1.0
   powerdns:
   - apiVersion: v2
+    appVersion: v4.4.1
+    created: "2021-09-21T13:06:48.288662633Z"
+    description: powerdns
+    digest: a01e66a80a9e2298cbee75fb39fd5bc738c7bbbbf187c0e3e93205a4bccbcdea
+    maintainers:
+    - name: abemusic
+    name: powerdns
+    sources:
+    - http://www.github.com/PowerDNS/
+    urls:
+    - https://github.com/abemusic/helm-charts/releases/download/powerdns-0.1.1/powerdns-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
     appVersion: v4.3.1
     created: "2021-09-21T13:02:41.7001491Z"
     description: PowerDNS is a DNS server, written in C++ and licensed under the GPL.
@@ -32,4 +45,4 @@ entries:
     urls:
     - https://github.com/abemusic/helm-charts/releases/download/powerdns-0.1.0/powerdns-0.1.0.tgz
     version: 0.1.0
-generated: "2021-09-21T13:02:41.7001659Z"
+generated: "2021-09-21T13:06:48.288677533Z"
