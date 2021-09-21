@@ -14,4 +14,22 @@ entries:
     urls:
     - https://github.com/abemusic/helm-charts/releases/download/postgres-0.1.0/postgres-0.1.0.tgz
     version: 0.1.0
-generated: "2021-09-16T19:04:42.824289858Z"
+  powerdns:
+  - apiVersion: v2
+    appVersion: v4.3.1
+    created: "2021-09-21T13:02:41.7001491Z"
+    description: PowerDNS is a DNS server, written in C++ and licensed under the GPL.
+      It runs on most Unix derivatives. PowerDNS features a large number of different
+      backends ranging from simple BIND style zonefiles to relational databases and
+      load balancing/failover algorithms. A DNS recursor is provided as a separate
+      program.
+    digest: 86106ae3a385cd9f5748488bd1cf9b021505747b1113739ab685de512c6d719e
+    maintainers:
+    - name: carpenike
+    name: powerdns
+    sources:
+    - http://www.github.com/PowerDNS/
+    urls:
+    - https://github.com/abemusic/helm-charts/releases/download/powerdns-0.1.0/powerdns-0.1.0.tgz
+    version: 0.1.0
+generated: "2021-09-21T13:02:41.7001659Z"
